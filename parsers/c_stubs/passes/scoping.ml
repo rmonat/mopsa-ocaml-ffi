@@ -142,6 +142,10 @@ let rec visit_expr (e:expr with_range) scope =
   | E_raise msg ->
     E_raise msg, scope
 
+  | E_function_call (f, args) ->
+    let args, scope = visit_list visit_expr args scope in
+    E_function_call (f, args), scope
+
 let visit_interval i scope =
   let lb, scope = visit_expr i.itv_lb scope in
   let ub, scope = visit_expr i.itv_ub scope in

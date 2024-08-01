@@ -125,6 +125,9 @@ and expr_kind =
   | E_conditional of expr with_range * expr with_range * expr with_range
 
   | E_builtin_call  of builtin * expr with_range list
+  | E_function_call of expr with_range * expr with_range list
+  | E_function      of C_AST.func
+
   | E_raise         of string
 
   | E_return
@@ -229,6 +232,8 @@ let rec pp_expr fmt exp =
   | E_builtin_call(f, args) -> fprintf fmt "%a(%a)" pp_builtin f (pp_list pp_expr ", ") args
   | E_return -> pp_print_string fmt "return"
   | E_raise msg -> fprintf fmt "raise(\"%s\")" msg
+  | E_function_call(f, args) -> fprintf fmt "%a(%a)" pp_expr f (pp_list pp_expr ", ") args
+  | E_function f -> pp_print_string fmt f.func_org_name
 
 and pp_unop = Cst.pp_unop
 

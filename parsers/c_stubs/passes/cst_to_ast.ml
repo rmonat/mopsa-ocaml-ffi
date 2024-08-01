@@ -83,16 +83,34 @@ let find_enum e prj =
   snd |>
   List.find (fun e' -> compare e'.enum_org_name e.vname = 0)
 
-let find_function f prj =
+let find_function f range prj =
   try
     let open C_AST in
-    bind_range f @@ fun f ->
     StringMap.bindings prj.proj_funcs |>
     List.split |>
     snd |>
-    List.find (fun f' -> compare f'.func_org_name f.vname = 0)
+    List.find (fun f' -> compare f'.func_org_name f = 0)
   with Not_found ->
-    Exceptions.panic_at f.range "function %s not found" f.content.vname
+    Exceptions.panic_at range "function %s not found" f
+
+let find_function_check f args range prj =
+  let f = find_function f range prj in
+  (* Check arguments number *)
+  let given = List.length args in
+  let accepted = Array.length f.func_parameters in
+  if not f.func_variadic then
+    ( if given <> accepted then
+        Exceptions.panic_at range "function '%s' accepts %d argument%a, but %d given"
+          f.func_org_name
+          accepted Debug.plurial_int accepted
+          given )
+  else
+    ( if given < accepted then
+        Exceptions.panic_at range "function '%s' accepts at least %d argument%a, but %d given"
+          f.func_org_name
+          accepted Debug.plurial_int accepted
+          given );
+  f
 
 let rec unroll_type t =
   let open C_AST in
@@ -245,10 +263,10 @@ let find_field_check t f range =
 (** {2 Expressions} *)
 (** *************** *)
 
-let visit_var v range prj func =
+let visit_var_opt v range prj func =
   let open C_AST in
   if v.vlocal then
-    {
+    Some {
       var_uid = v.vuid; (** FIXME: ensure that v.vuid is unique in the entire project *)
       var_org_name = v.vname;
       var_unique_name = v.vname ^ (string_of_int v.vuid); (** FIXME: give better unique names *)
@@ -277,8 +295,12 @@ let visit_var v range prj func =
     let vars = Array.to_list func.func_parameters @
                (StringMap.bindings prj.proj_vars |> List.split |> snd)
     in
-    try List.find (fun v' -> compare v'.var_org_name v.vname = 0) vars
-    with Not_found -> Exceptions.panic_at range "undeclared variable %a" pp_var v
+    List.find_opt (fun v' -> compare v'.var_org_name v.vname = 0) vars
+
+let visit_var v range prj func =
+  match visit_var_opt v range prj func with
+  | Some v -> v
+  | None   -> Exceptions.panic_at range "undeclared variable %a" pp_var v
 
 let int_rank =
   let open C_AST in
@@ -521,6 +543,40 @@ let rec visit_expr e prj func : Ast.expr with_range =
     | E_return -> Ast.E_return, func.func_return
 
     | E_raise msg -> Ast.E_raise(msg), int_type
+
+    | E_function_call(f, args) ->
+      let f =
+        match f.content with
+        | E_var v -> (
+            match visit_var_opt v f.range prj func with
+            | None ->
+              let f' = find_function_check v.vname args f.range prj in
+              let typ = C_AST.(T_function (Some {
+                  ftype_return = f'.func_return;
+                  ftype_params = f'.func_parameters |> Array.to_list |> List.map (fun p -> p.var_type);
+                  ftype_variadic = f'.func_variadic;
+                }))
+              in
+              with_range Ast.{
+                  kind = E_function f';
+                  typ = (typ, C_AST.no_qual)
+                } f.range
+            | _ ->
+              visit_expr f prj func
+          )
+
+        | _ -> visit_expr f prj func
+      in
+      let args = List.map (fun a -> visit_expr a prj func) args in
+      let typ =
+        match f.content.typ |> fst with
+        | C_AST.T_function (Some ft)
+        | C_AST.T_pointer(C_AST.T_function (Some ft) , _) ->
+          ft.ftype_return
+        | _ ->
+          assert false
+      in
+      Ast.E_function_call(f, args), typ
   in
   Ast.{ kind; typ }
 
@@ -591,23 +647,8 @@ let visit_local loc prj func =
     match l.lval with
     | L_new r -> Ast.L_new r.vname
     | L_call (f, args) ->
-      let f = find_function f prj in
-      (* Check arguments number *)
-      let given = List.length args in
-      let accepted = Array.length f.content.func_parameters in
-      if not f.content.func_variadic then
-        ( if given <> accepted then
-            Exceptions.panic_at loc.range "function '%s' accepts %d argument%a, but %d given"
-              f.content.func_org_name
-              accepted Debug.plurial_int accepted
-              given )
-      else
-        ( if given < accepted then
-            Exceptions.panic_at loc.range "function '%s' accepts at least %d argument%a, but %d given"
-              f.content.func_org_name
-              accepted Debug.plurial_int accepted
-              given );
-      Ast.L_call (f, visit_list visit_expr args prj func)
+      let f' = find_function_check f.content.vname args f.range prj in
+      Ast.L_call (with_range f' f.range , visit_list visit_expr args prj func)
   in
   Ast.{ lvar; lval }
 

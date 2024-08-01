@@ -1256,6 +1256,13 @@ and from_stub_expr ctx exp =
   | E_builtin_call (f, args) -> E_stub_builtin_call(f, List.map (from_stub_expr ctx) args)
   | E_return -> E_stub_return
   | E_raise s -> E_stub_raise s
+  | E_function_call (f, args) ->
+    let f' = from_stub_expr ctx f in
+    let args' = List.map (from_stub_expr ctx) args in
+    E_call(f', args')
+  | E_function f ->
+    let ff = find_function_in_context ctx exp.range f in
+    Ast.E_c_function ff
 
 and from_stub_log_binop = function
   | AND -> AND

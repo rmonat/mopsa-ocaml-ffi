@@ -124,6 +124,7 @@ and expr =
   | E_conditional of expr with_range * expr with_range * expr with_range
 
   | E_builtin_call  of builtin * expr with_range list
+  | E_function_call of expr with_range * expr with_range list
   | E_raise         of string
 
   | E_sizeof_type   of c_qual_typ with_range
@@ -323,6 +324,7 @@ let rec pp_expr fmt exp =
   | E_sizeof_expr e -> fprintf fmt "sizeof(%a)" pp_expr e
   | E_return -> pp_print_string fmt "return"
   | E_raise msg -> fprintf fmt "raise(\"%s\")" msg
+  | E_function_call(f, args) -> fprintf fmt "%a(%a)" pp_expr f (pp_list pp_expr ", ") args
 
 and pp_int_suffix fmt =
   function

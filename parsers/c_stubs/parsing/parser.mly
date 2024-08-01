@@ -277,6 +277,7 @@ postfix_expr:
   | builtin LPAR args RPAR                                   { E_builtin_call ($1, $3) }
   | with_range(postfix_expr) DOT IDENT                       { E_member ($1, $3) }
   | with_range(postfix_expr) ARROW IDENT                     { E_arrow ($1, $3) }
+  | with_range(postfix_expr) LPAR args RPAR                  { E_function_call ($1, $3) }
   | RAISE LPAR STRING_CONST RPAR                             { E_raise $3 }
 
 unary_expr:
