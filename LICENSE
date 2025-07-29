@@ -1,3 +1,18 @@
+As part of this research project, several files have been added to this
+repository that have different licenses. Specifically, the files under
+
+- vicuna/
+
+and the files
+
+- analyzer/languages/c/common/type_shapes.ml
+- analyzer/languages/c/common/type_shapes.mli
+
+are licensed according to the license in their file header. The remainder,
+specifically the original MOPSA code, is licensed under the terms of the
+following license:
+
+
                    GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
