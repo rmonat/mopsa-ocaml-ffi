@@ -13,3 +13,10 @@ _build
 *.merlin
 *~
 *#
+
+*.cmi
+*.cms
+*.cmx
+*.o
+*.exe
+*.externals
