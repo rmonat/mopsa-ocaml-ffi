@@ -129,7 +129,8 @@ mopsa_flags = [
   "-c-check-signed-arithmetic-overflow false",
   "-c-check-signed-implicit-cast-overflow false",
   "-c-check-unsigned-implicit-cast-overflow false",
-  "-without-libc"
+  "-without-libc",
+  "-marker=stub-case"
   # "-show-callstacks"
 ]
 mopsa_verbose_flags = [

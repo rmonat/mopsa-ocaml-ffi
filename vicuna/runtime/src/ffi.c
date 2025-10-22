@@ -284,13 +284,20 @@ void caml_modify(value *v_ptr, value w){
     return;
 }
 
-
-int caml_is_block(value w){
-    // NOTE: checking whether a value is a block does not require
-    // it to be alive for now
-    int imm = _ffi_is_immediate(w);
-    return !imm;
-}
+/*$
+ * case "#1" {
+ *    assumes: _ffi_is_immediate(w);
+ *    ensures: return == 0;
+ * }
+ *
+ * case "#2" {
+ *    assumes: !_ffi_is_immediate(w);
+ *    ensures: return == 1;
+ * }
+ */
+int caml_is_block(value w);
+// NOTE: checking whether a value is a block does not require
+// it to be alive for now
 
 int caml_is_long(value w){
     return _ffi_is_immediate(w);
