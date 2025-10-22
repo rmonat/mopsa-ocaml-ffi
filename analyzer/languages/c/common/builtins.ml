@@ -128,6 +128,7 @@ let _ =
       "_ffi_assert_shape_subset";
       "_ffi_assert_shape_compat";
       "_ffi_malloc_ptr";
+      "caml_is_block";
 
       "__builtin_isfinite";
       "__builtin_isnormal";

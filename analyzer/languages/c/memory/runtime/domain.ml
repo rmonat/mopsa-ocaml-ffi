@@ -790,6 +790,11 @@ and shapes_deref man flow e range =
     exec_assert_shape_compat_var v1 v2 range man flow >>% fun flow ->
     Eval.singleton (mk_unit range) flow
 
+  let eval_is_block e range man flow =
+    (* NOTE: checking whether a value is a block does not require it to be alive for now *)
+    eval_is_immediate e range man flow >>$ fun e flow ->
+    man.eval (mk_not e range) flow
+
   let eval_ffi_primtive f args range man flow =
     eval_ffi_primtive_args args man flow >>$ fun args flow ->
     match f, args with
@@ -832,7 +837,9 @@ and shapes_deref man flow e range =
     | "_ffi_assert_shape_subset", [e1; e2] ->
       eval_assert_shape_subset e1 e2 range man flow
     | "_ffi_assert_shape_compat", [e1; e2] ->
-        eval_assert_shape_compat e1 e2 range man flow
+      eval_assert_shape_compat e1 e2 range man flow
+    | "caml_is_block", [e] ->
+      eval_is_block e range man flow
 
     | _, _ ->
       let msg = Format.asprintf "unsupported ffi call %s(%a)" f (Format.pp_print_list ~pp_sep:(fun fmt () -> Format.pp_print_string fmt ", ") pp_expr) args in

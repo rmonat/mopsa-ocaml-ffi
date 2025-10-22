@@ -284,20 +284,17 @@ void caml_modify(value *v_ptr, value w){
     return;
 }
 
-/*$
- * case "#1" {
- *    assumes: _ffi_is_immediate(w);
- *    ensures: return == 0;
- * }
- *
- * case "#2" {
- *    assumes: !_ffi_is_immediate(w);
- *    ensures: return == 1;
- * }
- */
+/*** Stubs have relational issues, for now we just hardcode the behavior in the analyzer 
+case "#1" {
+   assumes: _ffi_is_immediate(w);
+   ensures: return == 0;
+}
+
+case "#2" {
+   assumes: !_ffi_is_immediate(w);
+   ensures: return == 1;
+   } */
 int caml_is_block(value w);
-// NOTE: checking whether a value is a block does not require
-// it to be alive for now
 
 int caml_is_long(value w){
     return _ffi_is_immediate(w);

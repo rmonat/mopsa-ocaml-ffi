@@ -1,50 +1,38 @@
 {
     "language": "c",
     "domain": {
-        // Partitioning
-        "apply": "universal.partitioning.tail-markers",
-        "on": {
-            "semantic": "C",
-            "switch": [
-                // C iterators
-                "c.iterators.program",
-                "c.iterators.interproc",
-                "c.iterators.goto",
-                "c.iterators.switch",
-                "c.iterators.loops",
-                "c.iterators.intraproc",
-                "c.iterators.atomics",
-                // Stubs
-                "stubs.iterators.body",
-                // C Libraries
-                "c.libs.compiler", // compiler builtins
-                "c.libs.mopsalib",
-                // // "c.libs.clib.file_descriptor",
-                "c.libs.clib.formatted_io.fprint",
-                // // "c.libs.clib.formatted_io.fscanf",
-                "c.libs.variadic",
-                // C stubs
-                "c.cstubs.assigns",
-                "c.cstubs.builtins",
-                "c.cstubs.resources",
-                // C memory model
-                // "c.memory.variable_length_array",
-                "c.memory.aggregates",
-                "c.runtime.status_protection",
-                {
-                    "semantic": "Universal",
-                    "switch": [
-                        "universal.iterators.unittest",
-                        "universal.iterators.interproc.inlining",
-                        "universal.iterators.intraproc",
-                        "universal.iterators.loops"
-                    ]
-                },
-                {
-                    "apply": {
-                        // C environment
+        "compose": [
+            {
+                "semantic": "C",
+                "switch": [
+                    // C iterators
+                    "c.iterators.program",
+                    "c.iterators.interproc",
+                    "c.iterators.goto",
+                    "c.iterators.switch",
+                    "c.iterators.loops",
+                    "c.iterators.intraproc",
+                    "c.iterators.atomics",
+                    // // // Stubs
+                    // // "stubs.iterators.body",
+                    // // // C Libraries
+                    "c.libs.compiler", // compiler builtins
+                    "c.libs.mopsalib",
+                    // // "c.libs.clib.file_descriptor",
+                    "c.libs.clib.formatted_io.fprint",
+                    // // "c.libs.clib.formatted_io.fscanf",
+                    "c.libs.variadic",
+                    // // // C stubs
+                    // // "c.cstubs.assigns",
+                    // // "c.cstubs.builtins",
+                    // // "c.cstubs.resources",
+                    // // // C memory model
+                    // // "c.memory.variable_length_array",
+                    "c.memory.aggregates",
+                    "c.runtime.status_protection",
+                    "universal.heap.recency",
+                    {
                         "compose": [
-                            "universal.heap.recency",
                             "c.memory.lowlevel.cells",
                             {
                                 "semantic": "C/Scalar",
@@ -55,9 +43,21 @@
                                 ]
                             }
                         ]
-                    },
-                    "on": {
-                        "semantic": "Universal",
+                    }
+                    // // Fallbacks
+                    // "stubs.iterators.fallback"
+                ]
+            },
+            {
+                "semantic": "Universal",
+                "switch": [
+                    // Universal iterators
+                    "universal.iterators.intraproc",
+                    "universal.iterators.loops",
+                    "universal.iterators.interproc.inlining",
+                    "universal.iterators.unittest",
+                    // Numeric environment
+                    {
                         "nonrel": {
                             "union": [
                                 "universal.numeric.values.intervals.float",
@@ -65,10 +65,8 @@
                             ]
                         }
                     }
-                },
-                // Fallbacks
-                "stubs.iterators.fallback"
-            ]
-        }
+                ]
+            }
+        ]
     }
 }

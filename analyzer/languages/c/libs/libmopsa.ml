@@ -105,7 +105,7 @@ struct
 
 
   let is_ffi_function = fun name ->
-    String.starts_with ~prefix:"_ffi_" name
+    String.starts_with ~prefix:"_ffi_" name || name = "caml_is_block"
 
 
   let eval_rand typ range man flow = man.eval (mk_top typ range) flow
