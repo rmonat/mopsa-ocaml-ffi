@@ -1,6 +1,7 @@
 # Vicuna Analysis
 
 Vicuna is a static analysis tool for OCaml-C FFI code that combines the MOPSA analyzer with the OxCaml compiler to detect runtime errors in C implementations of OCaml external functions.
+A more detailed explanation of Vicuna's modeling is provided in ./runtime/include/caml/ffi.h.
 
 ## Prerequisites
 
@@ -22,11 +23,12 @@ gcc -c -I ${OXCAML_INSTALL}/lib/ocaml -o demo_c.o demo.c
 ${OXCAML_INSTALL}/bin/ocamlopt.opt -bin-annot-cms unix.cmxa -I +unix -o demo.exe demo_c.o demo.ml
 ```
 
-
 ### 2. Extract externals from .cms file
 ```bash
 ${OXCAML_INSTALL}/bin/extract_externals.opt -output-file demo.externals demo.cms
 ```
+
+NB: Last step from 1. and this step can also work with .cmt files, and then `-bin-annot` is required.
 
 ### 3. Run Vicuna analysis
 ```bash
