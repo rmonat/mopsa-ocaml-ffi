@@ -1,0 +1,97 @@
+# Docker image to compile MOPSA on Ubuntu
+# Build with: docker build -t mopsa-build .
+#
+###############################################
+
+FROM ubuntu:24.04
+
+
+# configuration: required packages
+##
+
+ENV APT_DEPS build-essential opam clang git pkg-config libgmp-dev libmpfr-dev \
+             llvm-dev libclang-dev libclang-cpp-dev clang \
+             python3-dev python3-setuptools python3-pip python3-requests \
+             rsync m4 curl wget adduser less emacs-nox bash-completion autoconf
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+ENV TZ=Europe/Paris
+
+# install system packages as root
+# create a mopsa user
+##
+
+ENV TERM xterm-256color
+
+RUN \
+    apt-get update && \
+    apt-get install --no-install-recommends -y $APT_DEPS && \
+    adduser --disabled-password --gecos 'Mopsa' mopsa && \
+    adduser mopsa sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# the multilanguage analysis currently requires python with version <= 3.8
+RUN \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa &&  \
+    apt update && \
+    apt install -y python3.8 python3.8-dev && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+
+# log in as mopsa
+#
+
+USER mopsa
+WORKDIR /home/mopsa
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+# install OCaml dependencies with opam as mopsa user
+##
+
+RUN \
+    opam init --bare --disable-sandboxing -y && \
+    eval $(opam env) && \
+    opam switch create 4.14.1 && \
+    eval $(opam env) && \
+    opam update -y
+
+ENV OPAM_DEPS dune apron zarith menhir yojson arg-complete ppx_sexp_conv sexplib
+
+RUN \
+    opam pin add -y -n apron git+https://github.com/ocaml-flambda/apron && \
+    opam install -y $OPAM_DEPS
+
+ENV PATH="/home/mopsa/bin:${PATH}"
+
+WORKDIR /home/mopsa
+
+RUN \
+    eval `opam config env` && \
+    opam env >> .profile && \
+    opam env >> .bashrc && \
+    git clone --progress https://github.com/ocaml-flambda/mopsa-ocaml && \
+    cd mopsa-ocaml && \
+    ./configure --prefix /home/mopsa && \
+    make -j && \
+    make install && \
+    make tests && \
+    mopsa -v && \
+    cd /home/mopsa && \
+    mkdir workspace
+
+RUN \
+    opam switch create 5.2.0minus25 --empty --repos=ox=git+https://github.com/oxcaml/opam-repository.git,default && \
+    eval "$(opam env --switch=5.2.0minus25)" && \
+    opam install -y oxcaml-compiler.5.2.0minus25
+
+# RUN \
+#     eval $(opam env) && \
+#     opam repo add oxcaml git+https://github.com/oxcaml/oxcaml && \
+#     cd oxcaml 
+#     opam switch create 5.2.0+ox --repos oxcaml,default # check oxcaml hacking.md
+
+RUN \
+    opam switch 4.14.1 && \
+    echo "export OXCAML_INSTALL=$(realpath ~/.opam/5.2.0minus25/)" >> ~/.bashrc
